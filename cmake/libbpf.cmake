@@ -9,9 +9,9 @@ ExternalProject_Add(libbpf
     BUILD_COMMAND make -C src
         BUILD_STATIC_ONLY=1
         OBJDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf/
-        DESTDIR=${PROJECT_SOURCE_DIR}/3rdparty/libbpf/
-        INCLUDEDIR=
-        LIBDIR=
+        DESTDIR=${LIBBPF_ROOT}
+        INCLUDEDIR=include
+        LIBDIR=lib
         UAPIDIR=
         install install_uapi_headers
     BUILD_IN_SOURCE TRUE
@@ -19,5 +19,3 @@ ExternalProject_Add(libbpf
     STEP_TARGETS build
 )
 
-set(LIBBPF_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/libbpf)
-set(LIBBPF_LIBRARIES ${PROJECT_SOURCE_DIR}/libbpf/libbpf.a)

@@ -1,6 +1,5 @@
 
-
-
+include(ExternalProject)
 ExternalProject_Add(bpftool
     PREFIX bpftool
     GIT_REPOSITORY https://github.com/libbpf/bpftool.git
@@ -8,10 +7,8 @@ ExternalProject_Add(bpftool
     # SOURCE_DIR ${BPFTOOL_ROOT}/src
     CONFIGURE_COMMAND ""
     BUILD_COMMAND make bootstrap -C src
-        OUTPUT=${PROJECT_SOURCE_DIR}/3rdparty/
+        OUTPUT=${LIB_3RDPARTY_PATH}
     BUILD_IN_SOURCE TRUE
     INSTALL_COMMAND ""
     STEP_TARGETS build
 )
-
-set(BPFOBJECT_BPFTOOL_EXE ${PROJECT_SOURCE_DIR}/3rdparty/bootstrap/bpftool)
