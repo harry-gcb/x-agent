@@ -41,18 +41,19 @@ as the associated dependencies.
 
 .. code-block:: cmake
 
-  bpf_object(<name> <source>)
+  bpf_object(<name> <source> [<header> ...])
 
 Given an abstract ``<name>`` for a BPF object and the associated ``<source>``
 file, generates an interface library target, ``<name>_skel``, that may be
-linked against by other cmake targets.
+linked against by other cmake targets. Additional headers may be provided to 
+the macro to ensure that the generated skeleton is up-to-date.
 
 Example Usage:
 
 ::
 
   find_package(BpfObject REQUIRED)
-  bpf_object(myobject myobject.bpf.c)
+  bpf_object(myobject myobject.bpf.c myobject.h)
   add_executable(myapp myapp.c)
   target_link_libraries(myapp myobject_skel)
 
@@ -100,21 +101,19 @@ endif()
 
 if(BPFOBJECT_VMLINUX_H)
   get_filename_component(GENERATED_VMLINUX_DIR ${BPFOBJECT_VMLINUX_H} DIRECTORY)
-  message(STATUS "${BPFOBJECT_VMLINUX_H}")
 elseif(BPFOBJECT_BPFTOOL_EXE)
   # Generate vmlinux.h
   set(GENERATED_VMLINUX_DIR ${CMAKE_CURRENT_BINARY_DIR})
   set(BPFOBJECT_VMLINUX_H ${GENERATED_VMLINUX_DIR}/vmlinux.h)
+  message(STATUS "BPFOBJECT_BPFTOOL_EXE=${BPFOBJECT_BPFTOOL_EXE}")
   execute_process(COMMAND ${BPFOBJECT_BPFTOOL_EXE} btf dump file /sys/kernel/btf/vmlinux format c
     OUTPUT_FILE ${BPFOBJECT_VMLINUX_H}
     ERROR_VARIABLE VMLINUX_error
     RESULT_VARIABLE VMLINUX_result)
   if(${VMLINUX_result} EQUAL 0)
     set(VMLINUX ${BPFOBJECT_VMLINUX_H})
-    message(STATUS "VMLINUX_error=${VMLINUX_error}")
-    message(STATUS "VMLINUX_result=${VMLINUX_result}")
   else()
-    message(FATAL_ERROR "Failed to dump vmlinux.h from BTF: ${VMLINUX_error}")
+    message(FATAL_ERROR "Failed to dump vmlinux.h from BTF: ${VMLINUX_error}, ${VMLINUX_result}")
   endif()
 endif()
 
@@ -158,7 +157,10 @@ endif()
 
 # Public macro
 macro(bpf_object name input)
-  set(BPF_C_FILE ${PROJECT_SOURCE_DIR}/src/${input})
+  set(BPF_C_FILE ${input})
+  foreach(arg ${ARGN})
+    list(APPEND BPF_H_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${arg})
+  endforeach()
   set(BPF_O_FILE ${CMAKE_CURRENT_BINARY_DIR}/${name}.bpf.o)
   set(BPF_SKEL_FILE ${CMAKE_CURRENT_BINARY_DIR}/${name}.skel.h)
   set(OUTPUT_TARGET ${name}_skel)
@@ -166,11 +168,11 @@ macro(bpf_object name input)
   # Build BPF object file
   add_custom_command(OUTPUT ${BPF_O_FILE}
     COMMAND ${BPFOBJECT_CLANG_EXE} -g -O2 -target bpf -D__TARGET_ARCH_${ARCH}
-            ${CLANG_SYSTEM_INCLUDES} -I${GENERATED_VMLINUX_DIR} -I${PROJECT_SOURCE_DIR}/include
+            ${CLANG_SYSTEM_INCLUDES} -I${GENERATED_VMLINUX_DIR} -I${X_AGENT_INCLUDE_DIRS}
             -isystem ${LIBBPF_INCLUDE_DIRS} -c ${BPF_C_FILE} -o ${BPF_O_FILE}
     COMMAND_EXPAND_LISTS
     VERBATIM
-    DEPENDS ${BPF_C_FILE}
+    DEPENDS ${BPF_C_FILE} ${BPF_H_FILES}
     COMMENT "[clang] Building BPF object: ${name}")
 
   # Build BPF skeleton header
@@ -181,8 +183,9 @@ macro(bpf_object name input)
     COMMENT "[skel]  Building BPF skeleton: ${name}")
 
   add_library(${OUTPUT_TARGET} INTERFACE)
+  add_dependencies(${OUTPUT_TARGET} libbpf)
   target_sources(${OUTPUT_TARGET} INTERFACE ${BPF_SKEL_FILE})
-  target_include_directories(${OUTPUT_TARGET} INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
+  target_include_directories(${OUTPUT_TARGET} INTERFACE ${CMAKE_CURRENT_BINARY_DIR} ${X_AGENT_INCLUDE_DIRS})
   target_include_directories(${OUTPUT_TARGET} SYSTEM INTERFACE ${LIBBPF_INCLUDE_DIRS})
   target_link_libraries(${OUTPUT_TARGET} INTERFACE ${LIBBPF_LIBRARIES} -lelf -lz)
 endmacro()

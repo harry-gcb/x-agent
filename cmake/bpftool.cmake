@@ -1,14 +1,11 @@
+if (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/bpftool-v7.5.0-amd64.tar.gz)
+    file(DOWNLOAD  "https://github.com/libbpf/bpftool/releases/download/v7.5.0/bpftool-v7.5.0-amd64.tar.gz" ${CMAKE_CURRENT_BINARY_DIR}/bpftool-v7.5.0-amd64.tar.gz SHOW_PROGRESS)
+endif()
 
-include(ExternalProject)
-ExternalProject_Add(bpftool
-    PREFIX bpftool
-    GIT_REPOSITORY https://github.com/libbpf/bpftool.git
-    GIT_TAG v7.2.0
-    # SOURCE_DIR ${BPFTOOL_ROOT}/src
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND make bootstrap -C src
-        OUTPUT=${LIB_3RDPARTY_PATH}
-    BUILD_IN_SOURCE TRUE
-    INSTALL_COMMAND ""
-    STEP_TARGETS build
-)
+if (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/bpftool)
+    file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/bpftool-v7.5.0-amd64.tar.gz DESTINATION  ${CMAKE_CURRENT_BINARY_DIR} VERBOSE)
+    file(CHMOD ${CMAKE_CURRENT_BINARY_DIR}/bpftool FILE_PERMISSIONS OWNER_EXECUTE)
+endif()
+
+set(BPFOBJECT_BPFTOOL_EXE ${CMAKE_CURRENT_BINARY_DIR}/bpftool)
+message(STATUS "BPFOBJECT_BPFTOOL_EXE=${CMAKE_CURRENT_BINARY_DIR}/bpftool")
