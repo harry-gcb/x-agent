@@ -1,3 +1,5 @@
 include(bpftool.cmake)
 include(libbpf.cmake)
+include(blazesym.cmake)
+include(helpers.cmake)
 include(x-agent.cmake)

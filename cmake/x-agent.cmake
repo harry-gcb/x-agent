@@ -19,8 +19,18 @@ endif()
 
 find_package(BpfObject REQUIRED)
 
-add_executable(bootstrap)
-bpf_object(bootstrap ${PROJECT_SOURCE_DIR}/src/bootstrap.bpf.c)
-target_sources(bootstrap PRIVATE ${PROJECT_SOURCE_DIR}/src/bootstrap.c)
-target_include_directories(bootstrap PRIVATE ${X_AGENT_INCLUDE_DIRS})
-target_link_libraries(bootstrap PRIVATE bootstrap_skel)
+macro(build_bpf_app name)
+  add_executable(${name})
+  add_dependencies(${name} blazesym)
+  bpf_object(${name} ${PROJECT_SOURCE_DIR}/src/${name}.bpf.c)
+  target_sources(${name} PRIVATE ${PROJECT_SOURCE_DIR}/src/${name}.c)
+  target_include_directories(${name} PRIVATE ${X_AGENT_INCLUDE_DIRS})
+  target_link_libraries(${name} PRIVATE ${name}_skel helpers)
+  target_include_directories(${name} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/blazesym/src/blazesym/capi/include)
+  target_link_libraries(${name} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/blazesym/src/blazesym/target/release/libblazesym_c.a -lpthread -lrt -ldl)
+endmacro()
+
+build_bpf_app(bootstrap)
+build_bpf_app(profile)
+build_bpf_app(offcputime)
+
