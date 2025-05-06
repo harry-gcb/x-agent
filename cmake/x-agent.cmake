@@ -1,5 +1,6 @@
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/tools)
 set(X_AGENT_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include)
+set(X_AGENT_LIB_DIRS ${PROJECT_SOURCE_DIR}/lib)
 
 if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
   set(ARCH "x86")
@@ -33,4 +34,5 @@ endmacro()
 build_bpf_app(bootstrap)
 build_bpf_app(profile)
 build_bpf_app(offcputime)
+build_bpf_app(agent)
 

@@ -167,7 +167,7 @@ macro(bpf_object name input)
   # Build BPF object file
   add_custom_command(OUTPUT ${BPF_O_FILE}
     COMMAND ${BPFOBJECT_CLANG_EXE} -g -O2 -target bpf -D__TARGET_ARCH_${ARCH}
-            ${CLANG_SYSTEM_INCLUDES} -I${GENERATED_VMLINUX_DIR} -I${X_AGENT_INCLUDE_DIRS}
+            ${CLANG_SYSTEM_INCLUDES} -I${GENERATED_VMLINUX_DIR} -I${X_AGENT_INCLUDE_DIRS} -I${X_AGENT_LIB_DIRS}
             -isystem ${LIBBPF_INCLUDE_DIRS} -c ${BPF_C_FILE} -o ${BPF_O_FILE}
     COMMAND_EXPAND_LISTS
     VERBATIM
@@ -184,7 +184,7 @@ macro(bpf_object name input)
   add_library(${OUTPUT_TARGET} INTERFACE)
   add_dependencies(${OUTPUT_TARGET} libbpf)
   target_sources(${OUTPUT_TARGET} INTERFACE ${BPF_SKEL_FILE})
-  target_include_directories(${OUTPUT_TARGET} INTERFACE ${CMAKE_CURRENT_BINARY_DIR} ${X_AGENT_INCLUDE_DIRS})
+  target_include_directories(${OUTPUT_TARGET} INTERFACE ${CMAKE_CURRENT_BINARY_DIR} ${X_AGENT_INCLUDE_DIRS} ${X_AGENT_LIB_DIRS})
   target_include_directories(${OUTPUT_TARGET} SYSTEM INTERFACE ${LIBBPF_INCLUDE_DIRS})
   target_link_libraries(${OUTPUT_TARGET} INTERFACE ${LIBBPF_LIBRARIES} -lelf -lz)
 endmacro()
